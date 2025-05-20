@@ -9,22 +9,31 @@ export async function POST(req: Request) {
 
   try {
     const member = await prisma.member.findUnique({ where: { email } })
+
     if (!member) {
       return NextResponse.json({ message: 'Member not found' }, { status: 404 })
     }
 
-    const newEndDate = addMonths(
-      new Date(member.endDate > new Date() ? member.endDate : new Date()),
-      Number(months)
-    )
+    const now = new Date()
+    const baseDate = member.endDate > now ? member.endDate : now
+    const newEndDate = addMonths(baseDate, months)
 
     const updated = await prisma.member.update({
       where: { email },
       data: { endDate: newEndDate },
     })
 
+    await prisma.renewal.create({
+      data: {
+        memberId: member.id,
+        months,
+        newEndDate,
+      },
+    })
+
     return NextResponse.json({ message: 'Membership renewed successfully!' }, { status: 200 })
   } catch (err) {
+    console.error(err)
     return NextResponse.json({ message: 'Renewal failed' }, { status: 500 })
   }
 }

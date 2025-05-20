@@ -14,13 +14,39 @@ datasource db {
 }
 
 
+// prisma/schema.prisma
+
 model Member {
-  id          Int      @id @default(autoincrement())
-  name        String
-  email       String   @unique
-  phone       String
-  startDate   DateTime
-  endDate     DateTime
-  createdAt   DateTime @default(now())
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  phone     String
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime   @default(now())
+  renewals  Renewal[]
+  emailLogs EmailLog[]
 }
+
+model Renewal {
+  id        Int       @id @default(autoincrement())
+  memberId  Int
+  member    Member    @relation(fields: [memberId], references: [id])
+  renewedAt DateTime  @default(now())
+  months    Int
+  newEndDate DateTime
+}
+
+model EmailLog {
+  id        Int      @id @default(autoincrement())
+  member    Member   @relation(fields: [memberId], references: [id])
+  memberId  Int
+  type      String   
+  sentAt    DateTime @default(now())
+  email     String
+
+  @@index([type, memberId])
+}
+
+
 
