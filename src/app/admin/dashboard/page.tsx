@@ -1,12 +1,11 @@
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config'
 import { redirect } from 'next/navigation'
 import AdminDashboardClient from './AdminDashboardClient'
 
 export default async function AdminDashboard() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession()
 
-  if (!session?.user) {
+  if (!session?.user || session.user.role !== 'admin') {
     redirect('/login')
   }
 

@@ -1,13 +1,12 @@
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config'
 import { redirect } from 'next/navigation'
 import RenewalHistoryClient from './RenewalHistoryClient'
 
 export default async function RenewalHistory() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession()
 
-  if (!session?.user) {
-    redirect('/login')
+    if (!session?.user || (session.user as any).role !== 'admin') {
+      redirect('/login')
   }
 
   return <RenewalHistoryClient />

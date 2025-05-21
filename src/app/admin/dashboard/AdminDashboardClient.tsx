@@ -18,6 +18,9 @@ interface AdminDashboardClientProps {
 export default function AdminDashboardClient({ user }: AdminDashboardClientProps) {
   const [members, setMembers] = useState<Member[]>([])
   const [expiring, setExpiring] = useState<Member[]>([])
+  const [renewals, setRenewals] = useState<any[]>([])
+  const [durations, setDurations] = useState<Record<number, number>>({})
+
 
   useEffect(() => {
     fetch('/api/admin/members')
@@ -25,8 +28,14 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
       .then(setMembers)
 
     fetch('/api/admin/expiring')
-    .then((res)=> res.json())
-    .then(setExpiring)
+      .then((res)=> res.json())
+      .then(setExpiring)
+
+    fetch('/api/admin/renewals')
+      .then((res)=>{
+        res.json()
+      .then(setRenewals)
+    })
   }, [])
 
   const getStatus = (endDate: string) => {
@@ -67,9 +76,62 @@ export default function AdminDashboardClient({ user }: AdminDashboardClientProps
                 <p><strong>Email:</strong> {m.email}</p>
                 <p><strong>End Date:</strong> {new Date(m.endDate).toLocaleDateString()}</p>
                 <p><strong>Status:</strong> {getStatus(m.endDate)}</p>
+                <label className="text-sm block mt-2">
+                    Duration (months):
+                    <select
+                      value={durations[m.id] || 1}
+                      onChange={(e) => setDurations({ ...durations, [m.id]: parseInt(e.target.value) })}
+                      className="ml-2 p-1 border rounded"
+                    >
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                      ))}
+                    </select>
+                  </label>
+
+
+                    <button
+                      onClick={async () => {
+                          const duration = durations[m.id] || 1
+                          const res = await fetch(`/api/admin/renew/${m.id}`, {
+                            method: 'POST',
+                            body: JSON.stringify({ months: duration }),
+                          })
+                          if (res.ok) {
+                            alert('Renewal successful!')
+                            window.location.reload()
+                          } else {
+                            alert('Renewal failed')
+                          }
+                        }}
+                        className="bg-green-600 text-white px-2 py-1 rounded mt-2"
+                      >
+                        Renew
+                    </button>
+
+                <div className="text-sm mt-2">
+                  <strong>Renewal History:</strong>
+                  <ul className="ml-4 list-disc">
+                    {renewals
+                      .filter((r) => r.memberId === m.id)
+                      .map((r) => (
+                        <li key={r.id}>
+                          {new Date(r.renewedAt).toLocaleDateString()} — Extended to{' '}
+                          {new Date(r.newEndDate).toLocaleDateString()}
+                        </li>
+                      ))}
+                    {renewals.filter((r) => r.memberId === m.id).length === 0 && (
+                      <li>No renewals yet.</li>
+                    )}
+                  </ul>
+                </div>
               </div>
             ))}
           </div>
+        </section>
+
+        <section>
+
         </section>
       </div>
     </>

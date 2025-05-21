@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client'
 import { NextResponse } from 'next/server'
 import { addMonths } from 'date-fns'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function POST(req: Request) {
   const { email, months } = await req.json()
@@ -26,8 +24,9 @@ export async function POST(req: Request) {
     await prisma.renewal.create({
       data: {
         memberId: member.id,
-        months,
+        previousEndDate: member.endDate,
         newEndDate,
+        renewedAt: now,
       },
     })
 
